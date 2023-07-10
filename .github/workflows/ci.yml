@@ -1,18 +1,16 @@
-name: Build and push
+name: Deploy to ECR
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
-  build:
-    name: Build and push docker image
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out code
+      - name: Checkout code
         uses: actions/checkout@v2
 
       - name: Configure AWS credentials
@@ -25,13 +23,13 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-        
+
       - name: Build and tag Docker image
         run: |
-          docker build -t goapp-survey Go-app/
-          docker tag goapp-survey:latest public.ecr.aws/t8t0l9v0/goapp-survey:latest
+          docker build -t public.ecr.aws/t8t0l9v0/goapp-survey:latest Go-app/
+          docker tag public.ecr.aws/t8t0l9v0/goapp-survey:latest public.ecr.aws/t8t0l9v0/goapp-survey:${{ github.sha }}
 
       - name: Push Docker image to ECR
         run: |
           docker push public.ecr.aws/t8t0l9v0/goapp-survey:latest
-        
+          docker push public.ecr.aws/t8t0l9v0/goapp-survey:${{ github.sha }}
