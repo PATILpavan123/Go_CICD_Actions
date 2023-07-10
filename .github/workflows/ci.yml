@@ -28,7 +28,7 @@ jobs:
         
       - name: Build and tag Docker image
         run: |
-          docker build -t goapp-survey .
+          docker build -t goapp-survey Go-app/
           docker tag goapp-survey:latest public.ecr.aws/t8t0l9v0/goapp-survey:latest
 
       - name: Push Docker image to ECR
