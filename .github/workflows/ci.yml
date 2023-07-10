@@ -1,16 +1,18 @@
-name: Deploy to ECR
+name: Build and push
 
 on:
   push:
-    branches:
-      - main
+    branches: [dev]
+  pull_request:
+    branches: [main]
 
 jobs:
-  deploy:
+  build:
+    name: Build and push docker image
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Check out code
         uses: actions/checkout@v2
 
       - name: Configure AWS credentials
@@ -18,18 +20,17 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+          aws-region: eu-central-1
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build and tag Docker image
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: goapp-survey
+          IMAGE_TAG: latest
         run: |
-          docker build -t public.ecr.aws/t8t0l9v0/goapp-survey:latest Go-app/
-          docker tag public.ecr.aws/t8t0l9v0/goapp-survey:latest public.ecr.aws/t8t0l9v0/goapp-survey:${{ github.sha }}
-
-      - name: Push Docker image to ECR
-        run: |
-          docker push public.ecr.aws/t8t0l9v0/goapp-survey:latest
-          docker push public.ecr.aws/t8t0l9v0/goapp-survey:${{ github.sha }}
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG Go-app/
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
